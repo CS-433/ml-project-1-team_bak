@@ -112,3 +112,27 @@ def build_model_data(height, weight):
     num_samples = len(y)
     tx = np.c_[np.ones(num_samples), x]
     return y, tx
+
+# LOGISTIC REGRESSION FUNCTIONS
+def sigmoid(t):
+    # sigmoid function is applied on t.
+    return 1.0 / (1 + np.exp(-t))
+
+def calculate_loss_lr(y, tx, w):
+    # computing the cost by negative log likelihood.
+    pred = sigmoid(tx.dot(w))
+    loss = y.T.dot(np.log(pred)) + (1 - y).T.dot(np.log(1 - pred))
+    return np.squeeze(- loss)
+
+def calculate_gradient_lr(y, tx, w):
+    """compute the gradient of loss."""
+    pred = sigmoid(tx.dot(w))
+    grad = tx.T.dot(pred - y)
+    return grad
+
+def calculate_hessian(y, tx, w):
+    """return the Hessian of the loss function."""
+    pred = sigmoid(tx.dot(w))
+    pred = np.diag(pred.T[0])
+    r = np.multiply(pred, (1-pred))
+    return tx.T.dot(r).dot(tx)
