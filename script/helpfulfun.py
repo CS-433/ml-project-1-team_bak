@@ -6,7 +6,7 @@ import numpy as np
 # COMPUTING LOSS 
 #*************************************************************************
 def compute_error(y,tx,w):
-     return y - tx.dot(w).reshape((y.shape[0],))
+    return y - tx.dot(w).reshape((y.shape[0],))
     
 def compute_mse(e):
     """Calculate the mse for vector e."""
