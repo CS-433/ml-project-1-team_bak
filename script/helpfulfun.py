@@ -61,7 +61,8 @@ def standardize(x):
     x = x - mean_x
     std_x = np.std(x)
     x = x / std_x
-    return x, mean_x, std_x
+    tx = np.c_[np.ones(x.shape[0]), x]
+    return tx, mean_x, std_x
 
 # LOGISTIC REGRESSION FUNCTIONS
 #*************************************************************************
