@@ -3,7 +3,7 @@
 
 import numpy as np
 
-# Linear Regression
+# COMPUTING LOSS 
 #*************************************************************************
 def compute_error(y,tx,w):
     return y - tx.dot(w).reshape((y.shape[0],))
@@ -32,40 +32,12 @@ def compute_loss(y, tx, w):
     return compute_mse(e)
 
 def compute_loss_mae(y, tx, w):
-    
     e = compute_error(y, tx, w)
     return compute_mae(e)
 
-def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    matrix = np.zeros((x.shape[0], degree + 1))
-    for i in range(x.shape[0]):
-        for j in range(degree + 1):
-            matrix[i][j] = x[i]**j
-    return matrix
-
-def polynomial_regression():
-    """Constructing the polynomial basis function expansion of the data,
-       and then running least squares regression."""
-    # define parameters
-    degrees = [1, 3, 7, 12]
-    
-    # define the structure of the figure
-    num_row = 2
-    num_col = 2
-    f, axs = plt.subplots(num_row, num_col)
-
-    for ind, degree in enumerate(degrees):
-        matrix_x_poly = build_poly(x, degree)
-        weights, e = least_squares(y, matrix_x_poly)
-        rmse = np.sqrt(2*compute_mse(e))
-        
-        print("Processing {i}th experiment, degree={d}, rmse={loss}".format(i=ind + 1, d=degree, loss=rmse))
-        # plot fit
-        plot_fitted_curve(y, x, weights, degree, axs[ind // num_col][ind % num_col])
-        plt.tight_layout()
-
-    plt.show()
+def compute_rmse(y, tx, w):
+    mse = compute_mse(y, tx, w)
+    return np.sqrt(2 * mse)
 
 # COMPUTING GRADIENT 
 #*************************************************************************
@@ -84,6 +56,31 @@ def compute_gradient(y, tx, w):
     grad = (-1/y.shape[0]) * (tx.T.dot(e))
     return grad
 
+def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
+    """
+    Generate a minibatch iterator for a dataset.
+    Takes as input two iterables (here the output desired values 'y' and the input data 'tx')
+    Outputs an iterator which gives mini-batches of `batch_size` matching elements from `y` and `tx`.
+    Data can be randomly shuffled to avoid ordering in the original data messing with the randomness of the minibatches.
+    Example of use :
+    for minibatch_y, minibatch_tx in batch_iter(y, tx, 32):
+        <DO-SOMETHING>
+    """
+    data_size = len(y)
+
+    if shuffle:
+        shuffle_indices = np.random.permutation(np.arange(data_size))
+        shuffled_y = y[shuffle_indices]
+        shuffled_tx = tx[shuffle_indices]
+    else:
+        shuffled_y = y
+        shuffled_tx = tx
+    for batch_num in range(num_batches):
+        start_index = batch_num * batch_size
+        end_index = min((batch_num + 1) * batch_size, data_size)
+        if start_index != end_index:
+            yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+            
 # Preprocessing
 #*************************************************************************
 def standardize(x):
@@ -103,25 +100,15 @@ def sigmoid(t):
 
 def calculate_loss_lr(y, tx, w):
     # computing the cost by negative log likelihood.
-    #print(y.shape[0], tx.shape[0])
-    assert y.shape[0] == tx.shape[0]
-    assert tx.shape[1] == w.shape[0]
-    
-    pred = sigmoid(tx.dot(w).reshape((y.shape[0],)))
+    pred = sigmoid(tx.dot(w).reshape((tx.shape[0],)))
     loss = y.T.dot(np.log(pred)) + (1 - y).T.dot(np.log(1 - pred))
-    return np.squeeze(- loss)*1/len(y) 
+    return np.squeeze(- loss) * 1/len(y) 
 
 def calculate_gradient_lr(y, tx, w):
     """compute the gradient of loss."""
-    pred = sigmoid(tx.dot(w).reshape((y.shape[0],)))
-    grad = 1/len(y) * tx.T.dot(pred - y)
+    pred = sigmoid(tx.dot(w).reshape((tx.shape[0],)))
+    grad = tx.T.dot(pred - y) * 1/len(y) 
     return grad
-
-def learning_by_gradient_descent(y, tx, w, gamma):
-    """one step of gradient descent using logistic regression. Return the loss and the updated w"""
-    loss= calculate_loss_lr(y, tx, w)
-    w = w - gamma * calculate_gradient_lr(y, tx, w)
-    return loss, w
 
 def calculate_hessian(y, tx, w):
     """return the Hessian of the loss function."""
@@ -130,13 +117,18 @@ def calculate_hessian(y, tx, w):
     r = pred.dot(1-pred).reshape((y.shape[0],)) * 1/len(y)
     return tx.T.dot(r).dot(tx).reshape((w.shape[0],))
 
+def learning_by_gradient_descent(y, tx, w, gamma):
+    """one step of gradient descent using logistic regression. Return the loss and the updated w"""
+    loss= calculate_loss_lr(y, tx, w)
+    w = w - gamma * calculate_gradient_lr(y, tx, w)
+    return loss, w
+
 def logistic_regression(y, tx, w):
     """return the loss, gradient of the loss, and hessian of the loss."""
     loss = calculate_loss_lr(y,tx,w)
     grad = calculate_gradient_lr(y, tx, w)
     hess = calculate_hessian(y,tx,w)
     return (loss, grad, hess)
-    #raise NotImplementedError
     
 def penalized_logistic_regression(y, tx, w, lambda_):
     """return the loss and gradient."""
@@ -160,7 +152,6 @@ def learning_by_newton_method(y, tx, w, gamma):
     w = w_init - gamma * np.linalg.solve(hess,grad)
     return loss, w
 
-
 # CROSS VALIDATION
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""
@@ -170,7 +161,6 @@ def build_k_indices(y, k_fold, seed):
     indices = np.random.permutation(num_row)
     k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
     return np.array(k_indices)
-
 
 
 def cross_validation(y, x, k_indices, k, lambda_, degree):
@@ -194,9 +184,4 @@ def cross_validation(y, x, k_indices, k, lambda_, degree):
     loss_tr = np.sqrt(2 * compute_mse(y_train_sub, tx_train, w))
     loss_te = np.sqrt(2 * compute_mse(y_test_sub, tx_test, w))
     
-    return loss_tr, loss_te
-
-
-
-
-
+    return loss_tr, 
