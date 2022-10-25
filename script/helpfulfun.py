@@ -280,3 +280,33 @@ def colinearity_check(array_of_features,critical_value):
     #spitting data set data
     #removed old commits - answers
     return features_VIF
+
+# SCORING
+def get_scores(test_label, prediction):
+    tp = 0
+    fn = 0
+    fp = 0
+    tn = 0
+    for i in range(len(test_label)):
+        # print('For %d Expected %d, Got %d.' % (i, test_label[i][1], prediction[i]))
+        if (test_label[i], prediction[i]) == (1, 1):  # true positives
+            tp = tp + 1
+        elif (test_label[i], prediction[i]) == (0, 1):  # false negatives
+            fn = fn + 1
+        elif (test_label[i], prediction[i]) == (1, 0):  # false positive
+            fp = fp + 1
+        else:  # true negative
+            tn = tn + 1
+    accuracy = (tp + tn) / float(len(test_label)) * 100.0
+    print("Model prediction accuracy is %.2f%%" % accuracy)
+    matrix = [[tp, fn], [fp, tn]]
+    precision = matrix[0][0] / (matrix[0][0] + matrix[1][0])
+    recall = matrix[0][0] / (matrix[0][0] + matrix[0][1])
+    f1 = (2 * precision * recall) / (precision + recall)
+    return accuracy, f1, matrix
+
+
+def print_cm(matrix):
+    print('Confusion Matrix:')
+    print('TP=%d    FN=%d' % (matrix[0][0], matrix[0][1]))
+    print('FP=%d    TN=%d' % (matrix[1][0], matrix[1][1]))
