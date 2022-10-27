@@ -5,15 +5,159 @@ from cmath import isnan, nan
 from re import A
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
+
+########################################################################
+########### NEW FUNCTIONs THAT I HAVE INTRODUCED ########################
+########################################################################
+
+def load_csv_data(data, sub_sample=False):
+    """Loads data and returns y (class labels), x (features) and indices (event ids)"""
+    y = np.genfromtxt(data, delimiter=",", skip_header=1, dtype=str, usecols=1)
+    x = np.genfromtxt(data, delimiter=",", skip_header=1)
+    indices = x[:, 0].astype(np.int)
+    x = x[:, 2:]
+
+    # convert class labels from strings to binary (-1,1)
+    y_num = np.ones(len(y))
+    y_num[y=='b'] = -1
+    
+    # sub-sample
+    if sub_sample:
+        yb = yb[::50]
+        input_data = input_data[::50]
+        ids = ids[::50]
+
+    return y_num, x, indices
+
+def impute_missing(x, x_test):
+    """
+    Impute missing values: Delete features with more than 80% missing values
+                           Impute the mode in the features with less than 80% missing values 
+    """
+    num_row, num_col = x.shape # N number of rows, D number of cols
+    count_missing = np.zeros(num_col) #create a vector with len equal to the number of variables
+    remove = [] # list indicating which columns we should remove
+    for i in range(num_col):
+        count_missing[i] = np.count_nonzero(x[:,i] == -999) # compute num of missing values per column
+      
+        if (count_missing[i]/num_row > 0.7): 
+            remove.append(i) # se maggiore di .7 allora aggiungere alla lista di colonne da rimuovere
+           
+        elif count_missing[i]>0: # se minore di .8 ma comunque con missing presenti: imputare missing con mediana!
+            col_i = x[:,i] 
+            median = np.median(col_i[col_i != -999])
+            x[:,i] = np.where(x[:,i]==-999, median, x[:,i])
+            x_test[:,i] = np.where(x_test[:,i]==-999, median, x_test[:,i])
+                    
+    x[:,remove]=0
+    x_test[:,remove]=0
+        
+    return x, x_test
+
+def hist_plot_jet_class(y,x):
+    jet_class = {
+        0: x[:, 22] == 0,
+        1: x[:, 22] == 1,
+        2: x[:, 22] == 2, 
+        3: x[:, 22] == 3
+        }
+
+    plot = plt.subplot(111)
+    colors = ['red','blue','green','orange']
+    legend = ['calss: 0','class: 1','class: 2','class: 3']
+    pred = np.array([-1,  1])
+    w = 0.4
+    for class_i in range(len(jet_class)):
+        y_class_i = y[jet_class[class_i]]
+        count_prediction = {-1:  np.count_nonzero(y_class_i == -1), 1:  np.count_nonzero(y_class_i == 1)}
+        plot.bar(pred+w*class_i, count_prediction.values(), width=w, color=colors[class_i],align='center')
+
+    plot.set_ylabel('count')
+    plot.set_xticks(pred+w)
+    plot.set_xticklabels( ('prediction is -1', 'prediction is 1') )
+    plot.legend(legend)
+    plot.plot()
+    
+def distributionsPlot(y,x,colnames):
+
+    alphaQuantile = 0
+
+    for i in range(len(colnames)):
+
+        y_i =  y[(x[:,i] != - 999.0)]
+        x_i = x[(x[:,i] != - 999.0),:]
+        
+        if x.shape[0]!=0:
+
+            positive_ones = [y_i==1][0]
+            negative_ones = [y_i==-1][0]
+
+            plt.hist(x_i[positive_ones,i] ,100, histtype ='step',color='red',label='y == 1',density=True)      
+            plt.hist(x_i[negative_ones,i] ,100, histtype ='step',color='blue',label='y == -1',density=True)  
+            plt.legend(loc = "upper right")
+            plt.title("{name}, feature: {id}/{tot}".format(name=colnames[i],id=i,tot=len(colnames)-1), fontsize=12)
+            plt.show()        
+
+def outliers(x, alpha=0):
+    """
+   if a value is smaller than the alpha_percentile we replace it with that percentile. Same if the value is larger than the 1-       alpha -percentile   """
+    for i in range(x.shape[1]):
+        x[:,i][ x[:,i]<np.percentile(x[:,i],alpha) ] = np.percentile(x[:,i],alpha)
+        x[:,i][ x[:,i]>np.percentile(x[:,i],100-alpha) ] = np.percentile(x[:,i],100-alpha)
+        
+    return x
+
+def standardize(x, mean_x=None, std_x=None):
+    """ Standardize the dataset """
+    if mean_x is None:
+        mean_x = np.mean(x, axis=0)
+    x = x - mean_x
+    if std_x is None:
+        std_x = np.std(x, axis=0)
+    x = x[:, std_x > 0] / std_x[std_x > 0]
+
+    return x, mean_x, std_x
+
+def compute_accuracy(y_pred, y):
+    """Computes accuracy"""
+    sum = 0
+    for idx, y_val in enumerate(y):
+        if y_val == y_pred[idx]:
+            sum += 1
+
+    return sum / len(y)
+
+def transform_binary(weights, data):
+    y_pred = np.dot(data, weights)
+    y_pred[np.where(y_pred <= 0)] = -1
+    y_pred[np.where(y_pred > 0)] = 1
+    
+    return y_pred
+
+def get_predictions(x, best_w):
+    preds = np.dot(x,best_w)
+    y_te = np.where(preds < 0,-1,1)
+    y_pred = np.insert(y_pred, 0, ["Id", "Prediction"], axis=0)
+    return y_pred
 
 # COMPUTING LOSS 
 #*************************************************************************
 def compute_error(y,tx,w):
     return y - tx.dot(w).reshape((y.shape[0],))
     
-def compute_mse(e):
-    """Calculate the mse for vector e."""
-    return 1/2*np.mean(e**2)
+#def compute_mse(e):
+ #   """Calculate the mse for vector e."""
+  #  return 1/2*np.mean(e**2)
+
+def compute_mse(y, tx, w):
+    """
+    Compute the Mean Square Error as defined in class.
+    Takes as input the targeted y, the sample matrix X and the feature fector w.
+    """
+    e = y - tx@w
+    mse = e.T.dot(e) /(2*len(e))
+    return mse
 
 def compute_mae(e):
     """Calculate the mae for vector e."""
@@ -59,41 +203,39 @@ def compute_gradient(y, tx, w):
     grad = (-1/y.shape[0]) * (tx.T.dot(e))
     return grad
 
-def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
-    """
-    Generate a minibatch iterator for a dataset.
-    Takes as input two iterables (here the output desired values 'y' and the input data 'tx')
-    Outputs an iterator which gives mini-batches of `batch_size` matching elements from `y` and `tx`.
-    Data can be randomly shuffled to avoid ordering in the original data messing with the randomness of the minibatches.
-    Example of use :
-    for minibatch_y, minibatch_tx in batch_iter(y, tx, 32):
-        <DO-SOMETHING>
-    """
-    data_size = len(y)
-
-    if shuffle:
-        shuffle_indices = np.random.permutation(np.arange(data_size))
-        shuffled_y = y[shuffle_indices]
-        shuffled_tx = tx[shuffle_indices]
-    else:
-        shuffled_y = y
-        shuffled_tx = tx
-    for batch_num in range(num_batches):
-        start_index = batch_num * batch_size
-        end_index = min((batch_num + 1) * batch_size, data_size)
-        if start_index != end_index:
-            yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+           
             
 # Preprocessing
 #*************************************************************************
-def standardize(x):
-    """Standardize the original data set."""
-    mean_x = np.mean(x)
+
+
+def standardize(x, mean_x=None, std_x=None):
+    """ Standardize the dataset """
+    if mean_x is None:
+        mean_x = np.mean(x, axis=0)
     x = x - mean_x
-    std_x = np.std(x)
-    x = x / std_x
-    tx = np.c_[np.ones(x.shape[0]), x]
-    return tx, mean_x, std_x
+    if std_x is None:
+        std_x = np.std(x, axis=0)
+    x = x[:, std_x > 0] / std_x[std_x > 0]
+
+    return x, mean_x, std_x
+
+
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree.
+    
+    Args:
+        x: numpy array of shape (N,), N is the number of samples.
+        degree: integer.
+        
+    Returns:
+        poly: numpy array of shape (N,d+1)
+    """
+    poly = np.ones((len(x),1))
+    for j in range( 1, degree + 1):
+        poly = np.c_[poly, np.power(x, j)]
+    return poly
+
 
 # LOGISTIC REGRESSION FUNCTIONS
 #*************************************************************************
@@ -134,11 +276,33 @@ def build_poly(x, degree):
         poly = np.c_[poly, np.power(x, deg)]
     return poly
 
-def ridge_regression(y, tx, lambda_ ):
-    aI = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
-    a = tx.T.dot(tx) + aI
-    b = tx.T.dot(y)
-    return np.linalg.solve(a, b)
+
+
+def ridge_regression(y, tx, lambda_):
+    """
+    Compute an esimated solution of the problem y = tx @ w , and the associated error. Note that this method
+    is a variant of least_square() but with an added regularization term lambda_. 
+    This method is equivalent to the minimization problem of finding w such that |y-tx@w||^2 + lambda_*||w||^2 is minimal. 
+    The error is the mean square error of the targeted y and the solution produced by the least square function.
+    Takes as input the targeted y, the sample matrix X and the regulariation term lambda_.
+    """
+    x_t = tx.T
+    lambd = lambda_ * 2 * len(y)
+    w = np.linalg.solve (np.dot(x_t, tx) + lambd * np.eye(tx.shape[1]), np.dot(x_t,y)) 
+    loss = compute_mse(y, tx, w)
+
+    return w,loss
+
+def build_k_indices(y, k_fold, seed):
+    """build k indices for k-fold."""
+    num_row = y.shape[0] #qui in realtà sembra stia prendendo tutta y... però dipende con che parametri chiami la funzione
+    interval = int(num_row / k_fold)
+    np.random.seed(seed)
+    indices = np.random.permutation(num_row)
+    k_indices = [indices[k * interval: (k + 1) * interval]
+                 for k in range(k_fold)]
+    return np.array(k_indices)
+###############################################################################################
 
 def logistic_regression(y, tx, w):
     """return the loss, gradient of the loss, and hessian of the loss."""
@@ -191,8 +355,8 @@ def build_k_indices(y, k_fold, seed):
 
  
 
-def cross_validation(y, x, k_indices, k, lambda_, degree):
-    """return the loss of ridge regression for a fold corresponding to k_indices"""
+"""def cross_validation(y, x, k_indices, k, lambda_, degree):
+    #return the loss of ridge regression for a fold corresponding to k_indicec
     x_test_sub = x[k_indices[k]]
     x_train_sub = []
     for i in range(k_indices.shape[0]):
@@ -212,7 +376,7 @@ def cross_validation(y, x, k_indices, k, lambda_, degree):
     loss_tr = np.sqrt(2 * compute_mse(y_train_sub, tx_train, w))
     loss_te = np.sqrt(2 * compute_mse(y_test_sub, tx_test, w))
     
-    return loss_tr, 
+    return loss_tr, """
 
 def least_squares(y, tx):
     """Calculate the least squares solution.
@@ -307,31 +471,4 @@ def colinearity_check(array_of_features,critical_value):
     return features_VIF
 
 # SCORING
-def get_scores(test_label, prediction):
-    tp = 0
-    fn = 0
-    fp = 0
-    tn = 0
-    for i in range(len(test_label)):
-        # print('For %d Expected %d, Got %d.' % (i, test_label[i][1], prediction[i]))
-        if (test_label[i], prediction[i]) == (1, 1):  # true positives
-            tp = tp + 1
-        elif (test_label[i], prediction[i]) == (0, 1):  # false negatives
-            fn = fn + 1
-        elif (test_label[i], prediction[i]) == (1, 0):  # false positive
-            fp = fp + 1
-        else:  # true negative
-            tn = tn + 1
-    accuracy = (tp + tn) / float(len(test_label)) * 100.0
-    print("Model prediction accuracy is %.2f%%" % accuracy)
-    matrix = [[tp, fn], [fp, tn]]
-    precision = matrix[0][0] / (matrix[0][0] + matrix[1][0])
-    recall = matrix[0][0] / (matrix[0][0] + matrix[0][1])
-    f1 = (2 * precision * recall) / (precision + recall)
-    return accuracy, f1, matrix
 
-
-def print_cm(matrix):
-    print('Confusion Matrix:')
-    print('TP=%d    FN=%d' % (matrix[0][0], matrix[0][1]))
-    print('FP=%d    TN=%d' % (matrix[1][0], matrix[1][1]))
