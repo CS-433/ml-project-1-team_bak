@@ -278,20 +278,7 @@ def build_poly(x, degree):
 
 
 
-def ridge_regression(y, tx, lambda_):
-    """
-    Compute an esimated solution of the problem y = tx @ w , and the associated error. Note that this method
-    is a variant of least_square() but with an added regularization term lambda_. 
-    This method is equivalent to the minimization problem of finding w such that |y-tx@w||^2 + lambda_*||w||^2 is minimal. 
-    The error is the mean square error of the targeted y and the solution produced by the least square function.
-    Takes as input the targeted y, the sample matrix X and the regulariation term lambda_.
-    """
-    x_t = tx.T
-    lambd = lambda_ * 2 * len(y)
-    w = np.linalg.solve (np.dot(x_t, tx) + lambd * np.eye(tx.shape[1]), np.dot(x_t,y)) 
-    loss = compute_mse(y, tx, w)
 
-    return w,loss
 
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""
