@@ -1,5 +1,4 @@
 ## CS433 - Machine Learning Project 1 
-by Team BAK
 
 ## Authors (team: Team_BAK)
 - Elif Kurtay
