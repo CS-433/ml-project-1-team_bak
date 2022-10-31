@@ -12,8 +12,8 @@ if __name__ == '__main__':
     JET_COLUMN = 16
 
     # load best parameters
-    opt_degree = [3.0, 3.0, 6.0, 8.0]
-    opt_alpha = [7.0, 9.0, 7.0, 5.0]
+    opt_degree = [7.0, 7.0, 7.0, 6.0]
+    opt_alpha = [3.0, 3.0, 3.0, 4.0]
     opt_lambda = [2.5e-05, 1e-06, 2.5e-05, 1e-06]
 
     jet_train_class = {
