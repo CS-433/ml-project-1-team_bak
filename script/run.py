@@ -1,23 +1,20 @@
-import numpy as np
-from cross_validation import *
 from implementations import *
 from helpers import *
 from pre_process import *
 
 if __name__ == '__main__':
     # Load and preprocess data
-    y, x, ids = load_csv_data('train.csv')
-    _, x_test, ids_test = load_csv_data('test.csv')
+    y, x, ids = load_csv_data('../data/train.csv')
+    _, x_test, ids_test = load_csv_data('../data/test.csv')
     x_train, x_test = pre_process_data(x, x_test)
 
     # CONSTANTS
     JET_COLUMN = 16
 
     # load best parameters
-    opt_degree = [3.0, 3.0, 6.0, 6.0]
-    opt_alpha = [7.0, 9.0, 5.0, 5.0]
-    opt_lambda = [0.00021544346900318823, 1e-07, 4.641588833612773e-06, 0.00021544346900318823]
-
+    opt_degree = [3.0, 3.0, 6.0, 8.0]
+    opt_alpha = [7.0, 9.0, 7.0, 5.0]
+    opt_lambda = [2.5e-05, 1e-06, 2.5e-05, 1e-06]
 
     jet_train_class = {
         0: x_train[:, JET_COLUMN] == 0,
@@ -43,7 +40,7 @@ if __name__ == '__main__':
         x_jet, x_jet_test = modify_data(x_jet, x_jet_test, opt_alpha[i], opt_degree[i])
 
         # Train the model through Ridge Regression
-        best_w, _ = method(y_jet, x_jet, opt_lambda[i])
+        best_w, _ = ridge_regression(y_jet, x_jet, opt_lambda[i])
 
         # Prediction
         pred = get_predictions(best_w, x_jet_test)
