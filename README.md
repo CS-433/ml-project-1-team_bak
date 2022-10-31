@@ -6,6 +6,13 @@
 - Abdullah Aydemir
 
 ## File structure
+- report.pdf
+    - the pdf of the project report file including explanations of methods and our results.
+#### Data folder:
+- train.csv: train data needs to be uploaded and placed here with this name
+- test.csv: test data needs to be uploaded and placed here with this name
+- submission.csv: result submission
+#### Script folder:
 - cross_validation.py
     - File containing functions for splitting data for cross validation to choose best parameters and to perform the final training to retrieve predictions.
 - helpers.py
@@ -24,7 +31,7 @@
     - Main script - training the best model on the train set using the best hyperparameters and using the test set to make predictions for the submission
 
 ## How to reproduce our results
-We assume that the repository is already downloaded and extracted, that the [data](https://www.aicrowd.com/challenges/epfl-machine-learning-higgs/dataset_files) is downloaded and extracted in the script folder at the root of the program. We further assume that Anaconda is already installed.
+We assume that the repository is already downloaded and extracted, that the [data](https://www.aicrowd.com/challenges/epfl-machine-learning-higgs/dataset_files) is downloaded and extracted in the data folder at the root of the program. We further assume that Anaconda is already installed.
 
 ### Create the environment
 Make sure your environment satisfies the following requirements:
