@@ -50,10 +50,10 @@ def hist_plot_jet_class(y,tX):
 def hist_plot_best_methods():
     # best scores per jet
     
-    jet_0 = [0.830, 0.830, 0.843, 0.843, 0.827, 0.829]
-    jet_1 = [0.787, 0.785, 0.807, 0.807, 0.782, 0.785]
-    jet_2 = [0.790, 0.789, 0.819, 0.819, 0.794, 0.782]
-    jet_3 = [0.788, 0.787, 0.832, 0.832, 0.779, 0.770]
+    jet_0 = [0.826, 0.825, 0.843, 0.843, 0.811, 0.811]
+    jet_1 = [0.784, 0.783, 0.807, 0.807, 0.700, 0.700]
+    jet_2 = [0.788, 0.788, 0.819, 0.819, 0.698, 0.698]
+    jet_3 = [0.772, 0.773, 0.832, 0.832, 0.708, 0.708]
     jet_scores = [jet_0, jet_1, jet_2, jet_3]
 
     ax = plt.subplot(111)
@@ -65,7 +65,7 @@ def hist_plot_best_methods():
         ax.bar(ind+w*idx, jet_scores[idx], width=w, color=colors[idx],align='center')
 
     ax.set_ylabel('Accuracy Score')
-    ax.set_ylim([0.75, 0.88])
+    ax.set_ylim([0.68, 0.88])
     ax.set_xticks(ind+w)
     ax.set_xticklabels( ('GD', 'SGD', 'LS', 'Ridge', 'Logistic', 'Reg. LR') )
     ax.legend(legend)

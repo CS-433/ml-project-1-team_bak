@@ -18,7 +18,7 @@ def save_predictions(pred, inds_test, title="submission"):
     pred = pred.astype(int)
     y_pred = np.c_[inds_test, pred].astype(str)
     y_pred = np.insert(y_pred, 0, ["Id", "Prediction"], axis=0)
-    np.savetxt(title + ".csv", y_pred, fmt="%s", delimiter=",")
+    np.savetxt("../data/" + title + ".csv", y_pred, fmt="%s", delimiter=",")
     
 
 def impute_missing(x, x_test):
