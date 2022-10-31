@@ -33,7 +33,7 @@ def hist_plot_jet_class(y,tX):
 
     ax = plt.subplot(111)
     colors = ['b','g','r','y']
-    legend = ['calss: 0','class: 1','class: 2','class: 3']
+    legend = ['PRI_Jet_num: 0','PRI_Jet_num: 1','PRI_Jet_num: 2','PRI_Jet_num: 3']
     ind = np.array([-1,  1])
     w = 0.25
     for idx in range(len(msk_jets_train)):
@@ -43,6 +43,30 @@ def hist_plot_jet_class(y,tX):
 
     ax.set_ylabel('Numbers of training data')
     ax.set_xticks(ind+0.25)
-    ax.set_xticklabels( ('prediction is -1', 'prediction is 1') )
+    ax.set_xticklabels( ('y = -1', 'y = 1') )
+    ax.legend(legend)
+    ax.plot()
+    
+def hist_plot_best_methods():
+    # best scores per jet
+    
+    jet_0 = [0.830, 0.830, 0.843, 0.843, 0.827, 0.829]
+    jet_1 = [0.787, 0.785, 0.807, 0.807, 0.782, 0.785]
+    jet_2 = [0.790, 0.789, 0.819, 0.819, 0.794, 0.782]
+    jet_3 = [0.788, 0.787, 0.832, 0.832, 0.779, 0.770]
+    jet_scores = [jet_0, jet_1, jet_2, jet_3]
+
+    ax = plt.subplot(111)
+    colors = ['b','g','r','y']
+    legend = ['PRI_Jet_num: 0','PRI_Jet_num: 1','PRI_Jet_num: 2','PRI_Jet_num: 3']
+    ind = np.array([-5, -3, -1,  1, 3, 5])
+    w = 0.25
+    for idx in range(len(jet_scores)):
+        ax.bar(ind+w*idx, jet_scores[idx], width=w, color=colors[idx],align='center')
+
+    ax.set_ylabel('Accuracy Score')
+    ax.set_ylim([0.75, 0.88])
+    ax.set_xticks(ind+w)
+    ax.set_xticklabels( ('GD', 'SGD', 'LS', 'Ridge', 'Logistic', 'Reg. LR') )
     ax.legend(legend)
     ax.plot()
